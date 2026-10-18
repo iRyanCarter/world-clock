@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>World Clock</title>
+<style>
+  :root{font-family:system-ui,sans-serif;color-scheme:light dark}
+  body{max-width:760px;margin:2rem auto;padding:0 1rem}
+  h1{font-weight:600}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:1rem}
+  .card{border:1px solid #8884;border-radius:12px;padding:1rem;position:relative}
+  .city{font-weight:600}.time{font-size:2rem;font-variant-numeric:tabular-nums}.meta{opacity:.7;font-size:.9rem}
+  .rm{position:absolute;top:.4rem;right:.6rem;border:0;background:none;cursor:pointer;opacity:.5}
+  form{margin:1.5rem 0;display:flex;gap:.5rem;flex-wrap:wrap}input{flex:1;padding:.5rem}button{padding:.5rem 1rem}
+  #err{color:#d33}
+</style>
+</head>
+<body>
+<h1>World Clock</h1>
+<form id="add"><input id="tz" placeholder="Add a time zone, e.g. Europe/Paris" list="zones">
+<datalist id="zones"></datalist><button>Add</button>
+<label><input type="checkbox" id="h12"> 12-hour</label></form>
+<p id="err"></p>
+<div class="grid" id="grid"></div>
+<script src="clock.js"></script>
+<script>
+const DEFAULT = ["Asia/Taipei","UTC","America/New_York","Europe/London","Asia/Tokyo"];
+let zones = JSON.parse(localStorage.getItem("zones") || "null") || DEFAULT;
+const h12 = document.getElementById("h12");
+h12.checked = localStorage.getItem("h12") === "1";
+const save = () => { localStorage.setItem("zones", JSON.stringify(zones)); localStorage.setItem("h12", h12.checked ? "1" : "0"); };
+if (Intl.supportedValuesOf) document.getElementById("zones").innerHTML =
+  Intl.supportedValuesOf("timeZone").map(z => `<option value="${z}">`).join("");
+function render() {
+  const now = new Date();
+  document.getElementById("grid").innerHTML = zones.map((z, i) => `
+    <div class="card"><button class="rm" data-i="${i}" title="Remove">✕</button>
+    <div class="city">${z.split("/").pop().replace(/_/g," ")}</div>
+    <div class="time">${Clock.formatTime(now, z, h12.checked)}</div>
+    <div class="meta">${Clock.formatDate(now, z)} · ${Clock.formatOffset(Clock.utcOffsetMinutes(now, z))}</div></div>`).join("");
+}
+document.getElementById("grid").onclick = e => { if (e.target.dataset.i) { zones.splice(+e.target.dataset.i, 1); save(); render(); } };
+h12.onchange = () => { save(); render(); };
+document.getElementById("add").onsubmit = e => {
+  e.preventDefault(); const tz = document.getElementById("tz").value.trim(), err = document.getElementById("err");
+  if (!Clock.isValidZone(tz)) { err.textContent = `Unknown time zone: ${tz}`; return; }
+  err.textContent = ""; if (!zones.includes(tz)) zones.push(tz); save(); render(); document.getElementById("tz").value = "";
+};
+render(); setInterval(render, 1000);
+</script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+{
+  "name": "world-clock",
+  "version": "1.0.0",
+  "description": "A clean, dependency-free world clock web app",
+  "license": "MIT",
+  "author": "Ryan Carter <ryan66carter@gmail.com>",
+  "private": true,
+  "scripts": { "test": "node --test tests/" }
+}
